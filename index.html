@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ปฏิทินงาน</title>
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales-all.min.js'></script>
+<style>
+body{font-family:sans-serif;background:#fff;color:#c00;margin:0;padding:0;}
+.banner{width:100%;height:auto;display:block;border-bottom:2px solid #c00;}
+.top-menu{background:#fff;border-bottom:2px solid #c00;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+.top-menu .right-btn{background:#c00;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-weight:bold;transition:0.3s;font-size:14px;}
+.top-menu .right-btn:hover{background:#a00;}
+h2{text-align:center;margin:15px 10px;color:#c00;font-size:20px;}
+#calendar{max-width:1000px;margin:15px auto;border:2px solid #c00;border-radius:12px;padding:10px;background:#fff;}
+.fc .fc-daygrid-event{background:#c00 !important;color:#fff !important;border-radius:6px;padding:4px 6px;font-size:0.85em;}
+.fc .fc-toolbar-title{color:#c00;font-weight:bold;}
+.fc .fc-button-primary{background:#c00;border:none;color:#fff;border-radius:6px;}
+.fc .fc-button-primary:hover{background:#a00;}
+.search-box{max-width:1000px;margin:10px auto;text-align:right;padding:0 10px;}
+.search-box input{padding:6px 10px;border:1px solid #c00;border-radius:6px;font-size:14px;width:220px;}
+.highlight-event{background:#ff9800 !important;color:#fff !important;font-weight:bold;}
+@media (max-width:600px){
+    .top-menu{flex-direction:column;align-items:flex-start;}
+    .top-menu div{margin-bottom:8px;font-size:14px;}
+    .top-menu .right-btn{width:100%;text-align:center;font-size:14px;padding:8px;}
+    h2{font-size:16px;}
+    #calendar{width:95%;padding:5px;}
+    .search-box{text-align:center;}
+    .search-box input{width:90%;margin-top:8px;}
+    .fc .fc-toolbar-title{font-size:14px;}
+    .fc .fc-button{font-size:12px;padding:4px 6px;}
+}
+</style>
+</head>
+<body>
+
+<img src="image/banner.png" alt="Banner" class="banner">
+
+<div class="top-menu">
+  <div>📅 ปฏิทินงาน</div>
+  <a href="login.html" class="right-btn">เข้าสู่ระบบ Admin</a>
+</div>
+
+<h2>📅 ระบบจองบุคคลออกปฏิบัติงาน</h2>
+
+<div class="search-box">
+  🔎 <input type="text" id="searchInput" placeholder="ค้นหาชื่อหรือสถานที่...">
+</div>
+
+<div id="calendar"></div>
+
+<script type="module">
+// ✅ Firebase SDK
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+// 🔹 Firebase config ของคุณ
+const firebaseConfig = {
+ apiKey: "AIzaSyCnvtWmRqERXTmMzOoOyjo_ViSBKwpLrmw",
+  authDomain: "events-9cc52.firebaseapp.com",
+  projectId: "events-9cc52",
+  storageBucket: "events-9cc52.firebasestorage.app",
+  messagingSenderId: "425264247291",
+  appId: "1:425264247291:web:dcb45431fa01c05a411b5e",
+  measurementId: "G-JCE5CGRH3V"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+document.addEventListener('DOMContentLoaded', async function(){
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl,{
+        initialView: window.innerWidth < 600 ? 'listWeek' : 'dayGridMonth',
+        locale: 'th',
+        firstDay: 0,
+        eventContent:function(arg){
+            let el=document.createElement('div');
+            el.innerHTML="<strong>"+arg.event.title+"</strong><br><small>"+(arg.event.extendedProps.location||"")+"</small>";
+            return {domNodes:[el]};
+        },
+        eventClick:function(info){
+            alert("รายละเอียดงาน:\nชื่อ: "+info.event.title+
+                  "\nสถานที่: "+info.event.extendedProps.location+
+                  "\nวันที่เริ่ม: "+info.event.startStr+
+                  "\nวันที่สิ้นสุด: "+(info.event.endStr ? info.event.endStr.substr(0,10) : info.event.startStr));
+        }
+    });
+
+    // 🔹 ดึงข้อมูลจาก Firebase
+    try {
+        const snapshot = await getDocs(collection(db, "events"));
+        const events = [];
+        snapshot.forEach(docItem=>{
+            const data = docItem.data();
+            events.push({
+                id: docItem.id,
+                title: data.title || "",
+                start: data.start || "",
+                end: data.end || "",
+                location: data.location || ""
+            });
+        });
+        calendar.addEventSource(events);
+        calendar.render();
+    } catch(err){
+        console.error("ไม่สามารถโหลดข้อมูลจาก Firebase:", err);
+        calendar.render();
+    }
+
+    // ✅ ปรับ view ตามขนาดหน้าจอ
+    window.addEventListener('resize', function(){
+        if(window.innerWidth < 600){
+            calendar.changeView('listWeek');
+        } else {
+            calendar.changeView('dayGridMonth');
+        }
+    });
+
+    // ✅ ค้นหา + highlight
+    document.getElementById('searchInput').addEventListener('keyup', function(){
+        const keyword = this.value.toLowerCase();
+        const allEvents = calendar.getEvents();
+        if(keyword === ""){
+            allEvents.forEach(e => { e.setProp("display","auto"); e.setProp("classNames",[]); });
+            return;
+        }
+        allEvents.forEach(e=>{
+            const title = e.title.toLowerCase();
+            const location = e.extendedProps.location ? e.extendedProps.location.toLowerCase() : "";
+            const match = title.includes(keyword) || location.includes(keyword);
+            if(match){
+                e.setProp("display","auto");
+                e.setProp("classNames",["highlight-event"]);
+            }else{
+                e.setProp("display","none");
+                e.setProp("classNames",[]);
+            }
+        });
+    });
+});
+</script>
+
+</body>
+</html>

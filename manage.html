@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>จัดการงาน (Firebase)</title>
+<style>
+body {
+    font-family: sans-serif;
+    background: #fff;
+    color: #c00;
+    margin: 0;
+    padding: 20px;
+}
+h2 {
+    text-align: center;
+    color: #c00;
+}
+form {
+    max-width: 500px;
+    margin: 0 auto;
+    background: #fff;
+    border: 2px solid #c00;
+    padding: 20px;
+    border-radius: 12px;
+}
+.input-line {
+    width: 100%;
+    padding: 8px 5px;
+    border: none;
+    border-bottom: 2px solid #c00;
+    outline: none;
+    font-size: 16px;
+    background: transparent;
+    color: #c00;
+    margin: 12px 0;
+}
+.input-line:focus { border-bottom: 2px solid #a00; }
+button {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+    background: #c00;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    transition: 0.3s;
+}
+button:hover {background:#a00;}
+a.btn-back {
+    display: inline-block;
+    margin-top: 10px;
+    text-align: center;
+    background: #aaa;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+a.btn-back:hover {background:#888;}
+</style>
+</head>
+<body>
+<h2 id="formTitle">เพิ่มงานใหม่</h2>
+
+<form id="eventForm">
+  <input type="hidden" name="id" id="eventId">
+
+  ชื่อ:
+  <input type="text" name="title" id="title" class="input-line" required>
+
+  สถานที่:
+  <input type="text" name="location" id="location" class="input-line" required>
+
+  วันที่เริ่ม:
+  <input type="date" name="start" id="start" class="input-line" required>
+
+  วันที่สิ้นสุด:
+  <input type="date" name="end" id="end" class="input-line" required>
+
+  <button type="submit">บันทึก</button>
+  <button type="button" id="btnDelete" style="display:none;">ลบ</button>
+  <a href="calendar_admin.html" class="btn-back">⬅ กลับไปปฏิทิน</a>
+</form>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+// ตั้งค่า Firebase ของคุณ
+const firebaseConfig = {
+  apiKey: "AIzaSyCnvtWmRqERXTmMzOoOyjo_ViSBKwpLrmw",
+  authDomain: "events-9cc52.firebaseapp.com",
+  projectId: "events-9cc52",
+  storageBucket: "events-9cc52.firebasestorage.app",
+  messagingSenderId: "425264247291",
+  appId: "1:425264247291:web:dcb45431fa01c05a411b5e",
+  measurementId: "G-JCE5CGRH3V"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+document.addEventListener("DOMContentLoaded", async function(){
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get("action");
+  const id = params.get("id");
+
+  // ถ้าเป็นแก้ไข
+  if(action === "edit" && id){
+    document.getElementById("formTitle").innerText = "แก้ไขงาน";
+    document.getElementById("btnDelete").style.display = "block";
+
+    try {
+      const docRef = doc(db, "events", id);
+      const docSnap = await getDoc(docRef);
+      if(docSnap.exists()){
+        const ev = docSnap.data();
+        document.getElementById("eventId").value = id;
+        document.getElementById("title").value = ev.title || "";
+        document.getElementById("location").value = ev.location || "";
+        document.getElementById("start").value = ev.start || "";
+        document.getElementById("end").value = ev.end || "";
+      } else {
+        alert("❌ ไม่พบงานนี้");
+        window.location.href="calendar_admin.html";
+      }
+    } catch(err){
+      console.error(err);
+      alert("เกิดข้อผิดพลาด");
+      window.location.href="calendar_admin.html";
+    }
+  }
+
+  // บันทึกงาน
+  document.getElementById("eventForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      const id = document.getElementById("eventId").value;
+      const title = document.getElementById("title").value;
+      const location = document.getElementById("location").value;
+      const start = document.getElementById("start").value;
+      const end = document.getElementById("end").value;
+
+      try {
+        if(id){
+          // แก้ไข
+          const docRef = doc(db, "events", id);
+          await updateDoc(docRef, { title, location, start, end });
+          alert("แก้ไขเรียบร้อย");
+        } else {
+          // เพิ่มใหม่
+          const newDocRef = doc(collection(db, "events"));
+          await setDoc(newDocRef, { title, location, start, end });
+          alert("เพิ่มงานเรียบร้อย");
+        }
+        window.location.href="calendar_admin.html";
+      } catch(err){
+        console.error(err);
+        alert("เกิดข้อผิดพลาด");
+      }
+  });
+
+  // ลบงาน
+  document.getElementById("btnDelete").addEventListener("click", async function(){
+      if(confirm("ลบงานนี้?")){
+          const id = document.getElementById("eventId").value;
+          try {
+            await deleteDoc(doc(db, "events", id));
+            alert("ลบเรียบร้อย");
+            window.location.href="calendar_admin.html";
+          } catch(err){
+            console.error(err);
+            alert("เกิดข้อผิดพลาด");
+          }
+      }
+  });
+});
+</script>
+</body>
+</html>

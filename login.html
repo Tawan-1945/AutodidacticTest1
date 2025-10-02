@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เข้าสู่ระบบ</title>
+<style>
+body {
+    font-family: sans-serif;
+    background: #fff;
+    color: #c00;
+    margin: 0;
+    padding: 0;
+}
+.top-menu {
+    background: #fff;
+    border-bottom: 2px solid #c00;
+    padding: 10px 15px;
+    text-align: center;
+}
+.top-menu img {
+    height: 40px;
+    vertical-align: middle;
+}
+h2 {
+    text-align: center;
+    margin-top: 20px;
+    color: #c00;
+}
+form {
+    max-width: 350px;
+    margin: 30px auto;
+    background: #fff;
+    border: 2px solid #c00;
+    padding: 20px;
+    border-radius: 12px;
+}
+.input-line {
+    width: 100%;
+    padding: 8px 5px;
+    border: none;
+    border-bottom: 2px solid #c00;
+    outline: none;
+    font-size: 16px;
+    background: transparent;
+    color: #c00;
+    margin: 12px 0;
+}
+.input-line:focus {
+    border-bottom: 2px solid #a00;
+}
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 6px;
+    background: #c00;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+button:hover {background: #a00;}
+.info {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+    color: #555;
+}
+</style>
+</head>
+<body>
+
+<div class="top-menu">
+  <img src="image/logo.png" alt="Logo">
+</div>
+
+<h2>🔑 เข้าสู่ระบบ</h2>
+
+<form id="loginForm">
+  <input type="text" id="username" class="input-line" placeholder="ชื่อผู้ใช้" required>
+  <input type="password" id="password" class="input-line" placeholder="รหัสผ่าน" required>
+  <button type="submit">Login</button>
+</form>
+
+<div class="info">© 2025 ระบบจองบุคคลออกปฏิบัติงาน</div>
+
+<script>
+// ✅ ตัวอย่างทดสอบ (username=admin, password=1234)
+document.getElementById("loginForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+
+    if(user === "admin" && pass === "1234"){
+        alert("✅ เข้าสู่ระบบสำเร็จ");
+        window.location.href = "calendar_admin.html";
+    } else {
+        alert("❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+    }
+});
+</script>
+
+</body>
+</html>

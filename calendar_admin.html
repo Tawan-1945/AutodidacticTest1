@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ปฏิทินงาน (Admin)</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales-all.min.js"></script>
+  <style>
+    body{ font-family:sans-serif; background:#fff; color:#c00; margin:0; padding:0; }
+    .top-menu{ background:#fff; border-bottom:2px solid #c00; padding:10px 15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+    .top-menu a{ color:#fff; text-decoration:none; background:#c00; padding:8px 14px; border-radius:5px; font-weight:bold; transition:0.3s; font-size:14px; }
+    .top-menu a:hover{ background:#a00; }
+    .top-menu img{ height:32px; vertical-align:middle; }
+    h2{ text-align:center; margin-top:15px; margin-bottom:10px; color:#c00; font-size:18px; }
+    #calendar{ max-width:95%; margin:10px auto; border:2px solid #c00; border-radius:10px; padding:5px; background:#fff; box-sizing:border-box; }
+    #btnAddEvent{ display:inline-block; margin-bottom:12px; padding:8px 16px; background:#c00; color:#fff; font-weight:bold; border:none; border-radius:6px; cursor:pointer; transition:0.3s; font-size:14px; text-decoration:none; }
+    #btnAddEvent:hover{ background:#a00; }
+    .fc .fc-daygrid-event{ background:#c00 !important; color:#fff !important; border-radius:6px; padding:3px 5px; font-size:0.8em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .fc .fc-toolbar-title{ color:#c00; font-weight:bold; font-size:16px; }
+    .fc .fc-button-primary{ background:#c00; border:none; color:#fff; border-radius:6px; font-size:13px; padding:5px 8px; }
+    .fc .fc-button-primary:hover{ background:#a00; }
+    @media (max-width:600px){
+      .top-menu{ flex-direction:column; align-items:flex-start; }
+      .top-menu div{ margin-bottom:8px; font-size:14px; }
+      h2{ font-size:16px; }
+      #btnAddEvent{ width:90%; font-size:14px; }
+      .fc .fc-toolbar-title{ font-size:14px; }
+      .fc .fc-button{ font-size:12px; padding:4px 6px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-menu">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <img src="image/logo.png" alt="Logo">
+      <span>📅 ปฏิทินงาน (Admin)</span>
+    </div>
+    <a href="caledar.html">Logout</a>
+  </div>
+
+  <h2>📅 ระบบจองบุคคลออกปฏิบัติงาน</h2>
+
+  <div style="text-align:center;">
+    <a href="manage.html?action=add" id="btnAddEvent">➕ เพิ่มงานใหม่</a>
+  </div>
+
+  <div id="calendar"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+    // 🔹 Firebase Config ของคุณ
+    const firebaseConfig = {
+       apiKey: "AIzaSyCnvtWmRqERXTmMzOoOyjo_ViSBKwpLrmw",
+  authDomain: "events-9cc52.firebaseapp.com",
+  projectId: "events-9cc52",
+  storageBucket: "events-9cc52.firebasestorage.app",
+  messagingSenderId: "425264247291",
+  appId: "1:425264247291:web:dcb45431fa01c05a411b5e",
+  measurementId: "G-JCE5CGRH3V"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.addEventListener('DOMContentLoaded', async function(){
+      const calendarEl = document.getElementById('calendar');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: window.innerWidth < 600 ? 'listWeek' : 'dayGridMonth',
+        locale: 'th',
+        eventContent: function(arg){
+          let el = document.createElement('div');
+          el.innerHTML = "<strong>" + arg.event.title + "</strong><br><small>" + (arg.event.extendedProps.location||'') + "</small>";
+          return { domNodes:[el] };
+        },
+        eventClick: function(info){
+          window.location.href = "manage.html?action=edit&id=" + info.event.id;
+        }
+      });
+
+      try {
+        const snapshot = await getDocs(collection(db, "events"));
+        const events = [];
+        snapshot.forEach(docItem => {
+          const data = docItem.data();
+          events.push({
+            id: docItem.id,
+            title: data.title || "",
+            start: data.start || "",
+            end: data.end || "",
+            location: data.location || ""
+          });
+        });
+
+        calendar.addEventSource(events);
+        calendar.render();
+      } catch(err){
+        console.error("ไม่สามารถโหลดข้อมูลจาก Firebase:", err);
+        calendar.render();
+      }
+    });
+  </script>
+
+</body>
+</html>
